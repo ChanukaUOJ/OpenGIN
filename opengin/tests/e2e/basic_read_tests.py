@@ -1393,15 +1393,74 @@ def test_search_by_name_kind_and_created_date():
     
     print("✅ Search by name, kind, and creation date successful")
 
-def test_search_by_name_partial_match():
-    """Test that searching with a partial name match returns no results."""
-    print("\n🔍 Testing search by partial name match...")
+# def test_search_by_partial_name_match():
+    """Test that searching with a partial name match returns matching entities."""
+    print("\n🔍 Testing search by partial name match (should return results)...")
+    
+    # Test entity IDs
+    entity1_id = "test_partial_name_match_1"
+    entity2_id = "test_partial_name_match_2"
+    entity3_id = "test_partial_name_match_3"
+    
+    # Create test entities with different names
+    entity1_payload = {
+        "id": entity1_id,
+        "kind": {"major": "Person", "minor": "Employee"},
+        "created": "2025-04-01T00:00:00Z",
+        "terminated": "",
+        "name": {
+            "startTime": "2025-04-01T00:00:00Z",
+            "endTime": "",
+            "value": "Alice Martinez"
+        },
+        "metadata": [],
+        "attributes": [],
+        "relationships": []
+    }
+    
+    entity2_payload = {
+        "id": entity2_id,
+        "kind": {"major": "Person", "minor": "Employee"},
+        "created": "2025-04-01T00:00:00Z",
+        "terminated": "",
+        "name": {
+            "startTime": "2025-04-01T00:00:00Z",
+            "endTime": "",
+            "value": "Alice Morrison"
+        },
+        "metadata": [],
+        "attributes": [],
+        "relationships": []
+    }
+    
+    entity3_payload = {
+        "id": entity3_id,
+        "kind": {"major": "Person", "minor": "Employee"},
+        "created": "2025-04-01T00:00:00Z",
+        "terminated": "",
+        "name": {
+            "startTime": "2025-04-01T00:00:00Z",
+            "endTime": "",
+            "value": "Benjamin Martinez"
+        },
+        "metadata": [],
+        "attributes": [],
+        "relationships": []
+    }
+    
+    # Create entities
+    for i, payload in enumerate([entity1_payload, entity2_payload, entity3_payload], 1):
+        res = requests.post(INGESTION_API_URL, json=payload)
+        assert res.status_code in [201, 200], f"Failed to create entity{i}: {res.text}"
+    print(f"✅ Created test entities for partial name match test")
+    
+    # Search for partial name "Alice" - should match entity1 and entity2
     url = f"{READ_API_URL}/search"
     payload = {
         "kind": {
-            "major": "Organization"
+            "major": "Person"
         },
-        "name": "Ministry"  # Partial name that should not match
+        "name": "Alice"
     }
     res = requests.post(url, json=payload)
     assert res.status_code == 200, f"Search failed: {res.text}"
@@ -1410,9 +1469,379 @@ def test_search_by_name_partial_match():
     assert isinstance(body, dict), "Search response should be a dictionary"
     assert "body" in body, "Search response should have a 'body' field"
     assert isinstance(body["body"], list), "Search response body should be a list"
-    assert len(body["body"]) == 0, "Expected 0 results for partial name match"
     
-    print("✅ Search correctly returned no results for partial name match")
+    # Should find at least entity1 and entity2 (both contain "Alice")
+    found_ids = [entity["id"] for entity in body["body"]]
+    assert entity1_id in found_ids, f"Expected to find entity1 ({entity1_id})"
+    assert entity2_id in found_ids, f"Expected to find entity2 ({entity2_id})"
+    assert entity3_id not in found_ids, f"Entity3 ({entity3_id}) should not match 'Alice'"
+    
+    # Verify the names contain "Alice"
+    for entity in body["body"]:
+        if entity["id"] in [entity1_id, entity2_id]:
+            # Decode the name from protobuf
+            name_obj = json.loads(entity["name"])
+            hex_value = name_obj["value"]
+            decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+            assert "Alice" in decoded_name, f"Entity {entity['id']} name '{decoded_name}' should contain 'Alice'"
+    
+    print(f"✅ Found {len(body['body'])} entities matching partial name 'Alice'")
+    print("✅ Search by partial name match successful")
+
+def test_search_by_partial_name_match():
+    """Comprehensive tests for partial name matching, similar to TestFilterEntitiesWithPartialNameMatch in Go tests."""
+    print("\n🔍 Testing comprehensive partial name match scenarios...")
+    
+    # Create test entities with unique realistic names for testing partial matches
+    test_entities = [
+        {
+            "id": "filter_partial_name_test_alpha",
+            "kind": {"major": "Person", "minor": "Employee"},
+            "created": "2025-04-01T00:00:00Z",
+            "terminated": "",
+            "name": {
+                "startTime": "2025-04-01T00:00:00Z",
+                "endTime": "",
+                "value": "Diana Thompson"
+            },
+            "metadata": [],
+            "attributes": [],
+            "relationships": []
+        },
+        {
+            "id": "filter_partial_name_test_alpha_gamma",
+            "kind": {"major": "Person", "minor": "Employee"},
+            "created": "2025-04-01T00:00:00Z",
+            "terminated": "",
+            "name": {
+                "startTime": "2025-04-01T00:00:00Z",
+                "endTime": "",
+                "value": "Diana Williams"
+            },
+            "metadata": [],
+            "attributes": [],
+            "relationships": []
+        },
+        {
+            "id": "filter_partial_name_test_beta_delta",
+            "kind": {"major": "Person", "minor": "Employee"},
+            "created": "2025-04-01T00:00:00Z",
+            "terminated": "",
+            "name": {
+                "startTime": "2025-04-01T00:00:00Z",
+                "endTime": "",
+                "value": "Franklin Thompson"
+            },
+            "metadata": [],
+            "attributes": [],
+            "relationships": []
+        },
+        {
+            "id": "filter_partial_name_test_gamma_epsilon",
+            "kind": {"major": "Person", "minor": "Employee"},
+            "created": "2025-04-01T00:00:00Z",
+            "terminated": "",
+            "name": {
+                "startTime": "2025-04-01T00:00:00Z",
+                "endTime": "",
+                "value": "Gabrielle Williams"
+            },
+            "metadata": [],
+            "attributes": [],
+            "relationships": []
+        },
+        {
+            "id": "filter_partial_name_test_alpha_beta_gamma",
+            "kind": {"major": "Person", "minor": "Employee"},
+            "created": "2025-04-01T00:00:00Z",
+            "terminated": "",
+            "name": {
+                "startTime": "2025-04-01T00:00:00Z",
+                "endTime": "",
+                "value": "Diana Thompson Williams"
+            },
+            "metadata": [],
+            "attributes": [],
+            "relationships": []
+        },
+        # Add entities with special regex characters to test regex injection prevention
+        {
+            "id": "filter_partial_name_test_regex_1",
+            "kind": {"major": "Person", "minor": "Employee"},
+            "created": "2025-04-01T00:00:00Z",
+            "terminated": "",
+            "name": {
+                "startTime": "2025-04-01T00:00:00Z",
+                "endTime": "",
+                "value": "Diana (test)"
+            },
+            "metadata": [],
+            "attributes": [],
+            "relationships": []
+        },
+        {
+            "id": "filter_partial_name_test_regex_2",
+            "kind": {"major": "Person", "minor": "Employee"},
+            "created": "2025-04-01T00:00:00Z",
+            "terminated": "",
+            "name": {
+                "startTime": "2025-04-01T00:00:00Z",
+                "endTime": "",
+                "value": "Fran.klin"
+            },
+            "metadata": [],
+            "attributes": [],
+            "relationships": []
+        },
+    ]
+    
+    # Create all test entities
+    for entity in test_entities:
+        res = requests.post(INGESTION_API_URL, json=entity)
+        assert res.status_code in [201, 200], f"Failed to create entity {entity['id']}: {res.text}"
+    print(f"✅ Created {len(test_entities)} test entities for comprehensive partial name match test")
+    
+    url = f"{READ_API_URL}/search"
+    
+    # Test 1: Partial match at beginning
+    print("\n  Test 1: Partial match at beginning (Diana)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Diana"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 4, f"Expected 4 entities with 'Diana' in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Diana Thompson" in names, "Expected 'Diana Thompson' to be in results"
+    assert "Diana Williams" in names, "Expected 'Diana Williams' to be in results"
+    assert "Diana Thompson Williams" in names, "Expected 'Diana Thompson Williams' to be in results"
+    assert "Diana (test)" in names, "Expected 'Diana (test)' to be in results"
+    print("  ✅ Partial match at beginning successful")
+    
+    # Test 2: Partial match in middle
+    print("\n  Test 2: Partial match in middle (Thompson)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Thompson"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 3, f"Expected 3 entities with 'Thompson' in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Diana Thompson" in names, "Expected 'Diana Thompson' to be in results"
+    assert "Franklin Thompson" in names, "Expected 'Franklin Thompson' to be in results"
+    assert "Diana Thompson Williams" in names, "Expected 'Diana Thompson Williams' to be in results"
+    print("  ✅ Partial match in middle successful")
+    
+    # Test 3: Case-insensitive match lowercase
+    print("\n  Test 3: Case-insensitive match lowercase (diana)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "diana"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 4, f"Expected 4 entities with 'diana' (case-insensitive) in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Diana Thompson" in names, "Expected 'Diana Thompson' to be in results (case-insensitive match)"
+    assert "Diana Williams" in names, "Expected 'Diana Williams' to be in results (case-insensitive match)"
+    assert "Diana (test)" in names, "Expected 'Diana (test)' to be in results (case-insensitive match)"
+    assert "Diana Thompson Williams" in names, "Expected 'Diana Thompson Williams' to be in results (case-insensitive match)"
+    print("  ✅ Case-insensitive match lowercase successful")
+    
+    # Test 4: Case-insensitive match uppercase
+    print("\n  Test 4: Case-insensitive match uppercase (WILLIAMS)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "WILLIAMS"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 3, f"Expected 3 entities with 'WILLIAMS' (case-insensitive) in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Diana Williams" in names, "Expected 'Diana Williams' to be in results (case-insensitive match)"
+    assert "Gabrielle Williams" in names, "Expected 'Gabrielle Williams' to be in results (case-insensitive match)"
+    assert "Diana Thompson Williams" in names, "Expected 'Diana Thompson Williams' to be in results (case-insensitive match)"
+    print("  ✅ Case-insensitive match uppercase successful")
+    
+    # Test 5: Partial match in middle of multi-word name
+    print("\n  Test 5: Partial match in middle of multi-word name (Williams)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Williams"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 3, f"Expected 3 entities with 'Williams' in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Diana Williams" in names, "Expected 'Diana Williams' to be in results"
+    assert "Gabrielle Williams" in names, "Expected 'Gabrielle Williams' to be in results"
+    assert "Diana Thompson Williams" in names, "Expected 'Diana Thompson Williams' to be in results"
+    print("  ✅ Partial match in middle of multi-word name successful")
+    
+    # Test 6: No match returns empty
+    print("\n  Test 6: No match returns empty (Zachary Wellington)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Zachary Wellington"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 0, f"Expected 0 entities with 'Zachary Wellington' in the name, got {len(entities)}"
+    print("  ✅ No match returns empty successful")
+    
+    # Test 7: Combined with MinorKind filter
+    print("\n  Test 7: Combined with MinorKind filter (Diana + Employee)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Diana"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 4, f"Expected 4 entities with 'Diana' in the name and Employee minor kind, got {len(entities)}"
+    print("  ✅ Combined with MinorKind filter successful")
+    
+    # Test 8: Combined with created date filter
+    print("\n  Test 8: Combined with created date filter (Diana + created date)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Diana",
+        "created": "2025-04-01T00:00:00Z"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 4, f"Expected 4 entities with 'Diana' in the name and matching created date, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    expected_names = ["Diana Thompson", "Diana Williams", "Diana Thompson Williams", "Diana (test)"]
+    for name in names:
+        assert name in expected_names, f"Expected entity name '{name}' to be one of the Diana entities"
+    print("  ✅ Combined with created date filter successful")
+    
+    # Test 9: Single character partial match
+    print("\n  Test 9: Single character partial match (D)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "D"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) >= 4, f"Expected at least 4 entities with 'D' in the name (Diana entities), got {len(entities)}"
+    print("  ✅ Single character partial match successful")
+    
+    # Test 10: Regex injection prevention - parentheses
+    print("\n  Test 10: Regex injection prevention - parentheses (Diana (test))")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Diana (test)"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 1, f"Expected 1 entity with 'Diana (test)' in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Diana (test)" in names, "Expected 'Diana (test)' to be in results"
+    # Verify it doesn't match other Diana entities (regex injection would cause false matches)
+    assert "Diana Thompson" not in names, "Should not match 'Diana Thompson' when searching for 'Diana (test)'"
+    print("  ✅ Regex injection prevention - parentheses successful")
+    
+    # Test 11: Regex injection prevention - dot
+    print("\n  Test 11: Regex injection prevention - dot (Fran.klin)")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "Fran.klin"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 1, f"Expected 1 entity with 'Fran.klin' in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Fran.klin" in names, "Expected 'Fran.klin' to be in results"
+    # Verify it doesn't match "Franklin" (regex injection would cause false matches)
+    assert "Franklin Thompson" not in names, "Should not match 'Franklin Thompson' when searching for 'Fran.klin'"
+    print("  ✅ Regex injection prevention - dot successful")
+    
+    # Test 12: Regex injection prevention - partial match with special chars
+    print("\n  Test 12: Regex injection prevention - partial match with special chars ((test))")
+    payload = {
+        "kind": {"major": "Person", "minor": "Employee"},
+        "name": "(test)"
+    }
+    res = requests.post(url, json=payload)
+    assert res.status_code == 200, f"Search failed: {res.text}"
+    body = res.json()
+    entities = body["body"]
+    assert len(entities) == 1, f"Expected 1 entity with '(test)' in the name, got {len(entities)}"
+    names = []
+    for entity in entities:
+        name_obj = json.loads(entity["name"])
+        hex_value = name_obj["value"]
+        decoded_name = bytes.fromhex(hex_value).decode('utf-8')
+        names.append(decoded_name)
+    assert "Diana (test)" in names, "Expected 'Diana (test)' to be in results"
+    print("  ✅ Regex injection prevention - partial match with special chars successful")
+    
+    print("\n✅ Comprehensive partial name match tests successful")
 
 def test_search_by_terminated_date():
     """Test searching entities by termination date."""
@@ -1895,7 +2324,7 @@ if __name__ == "__main__":
         test_search_by_name_and_kind()
         test_search_by_kind_and_created_date()
         test_search_by_name_kind_and_created_date()
-        test_search_by_name_partial_match()
+        test_search_by_partial_name_match()
         
         # Run terminated date filter tests
         test_search_by_terminated_date()
