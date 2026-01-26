@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright 2025 Lanka Data Foundation
+# SPDX-License-Identifier: Apache-2.0
+
 set -e
 
 # Function to clean all databases (drops table structures, not just data)

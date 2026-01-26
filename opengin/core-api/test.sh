@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright 2025 Lanka Data Foundation
+# SPDX-License-Identifier: Apache-2.0
+
 # Exit on any error
 set -e
 
