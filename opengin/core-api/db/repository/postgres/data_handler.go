@@ -641,8 +641,8 @@ type TabularData struct {
 // RecordFilter represents a single row level filter
 type RecordFilter struct {
 	FieldName string
-	Operator  string 
-	Value string
+	Operator  string
+	Value     string
 }
 
 // GetData retrieves data from a table with optional field selection and filters, returns it as pb.Any with JSON-formatted tabular data.
@@ -730,8 +730,8 @@ func (repo *PostgresRepository) GetData(ctx context.Context, tableName string, f
 		query += " WHERE " + strings.Join(whereClauses, " AND ")
 	}
 
-	fmt.Printf("DEBUG: [DataHandler.GetData] query: %s", query)
-	fmt.Printf("DEBUG: [DataHandler.GetData] args: %v", args)
+	log.Printf("DEBUG: [DataHandler.GetData] query: %s", query)
+	log.Printf("DEBUG: [DataHandler.GetData] args: %v", args)
 
 	// Execute the query
 	rows, err := repo.DB().QueryContext(ctx, query, args...)
@@ -779,12 +779,12 @@ func (repo *PostgresRepository) GetData(ctx context.Context, tableName string, f
 	}
 
 	var tabularRows [][]interface{}
-	fmt.Printf("DEBUG: [DataHandler.GetData] rows: %v", rows)
+	log.Printf("DEBUG: [DataHandler.GetData] rows: %v", rows)
 	for rows.Next() {
 		rowValues := make([]interface{}, len(resultColumns))
 		rowPointers := make([]interface{}, len(resultColumns))
-		fmt.Printf("DEBUG: [DataHandler.GetData] rowValues: %v", rowValues)
-		fmt.Printf("DEBUG: [DataHandler.GetData] rowPointers: %v", rowPointers)
+		log.Printf("DEBUG: [DataHandler.GetData] rowValues: %v", rowValues)
+		log.Printf("DEBUG: [DataHandler.GetData] rowPointers: %v", rowPointers)
 		for i := range rowValues {
 			rowPointers[i] = &rowValues[i]
 		}

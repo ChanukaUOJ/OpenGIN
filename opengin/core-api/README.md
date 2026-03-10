@@ -30,6 +30,7 @@ cp env.template .env
 # after updating the required fields to be added to the environment
 # (you can find the example env configurations here)
 source .env
+# make sure to clean the dbs before running the tests
 go test -v ./... -count=1 -p=1
 ./core-service
 

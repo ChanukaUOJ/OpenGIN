@@ -193,9 +193,6 @@ func (s *Server) ReadEntity(ctx context.Context, req *pb.ReadEntityRequest) (*pb
 				filtersMap["record_filters"] = recordFilters
 			}
 
-			fmt.Printf("Filters map: %v\n", filtersMap)
-			fmt.Printf("Fields: %v\n", fields)
-
 			readOptions := engine.NewReadOptions(filtersMap, fields...)
 
 			// Process the entity with attributes to get the results map
@@ -455,8 +452,6 @@ func extractFieldsFromAttributes(attributes map[string]*pb.TimeBasedValueList) (
 			log.Printf("Unknown storage type %s for attribute %s", storageType, attrName)
 		}
 	}
-	fmt.Printf("final fields: %v\n", fields)
-	fmt.Printf("final records: %v\n", records)
 	return fields, records
 }
 
@@ -544,11 +539,8 @@ func extractRowsFromTabularAttributes(anyValue *anypb.Any) ([]postgres.RecordFil
 		return nil, fmt.Errorf("no rows found")
 	}
 
-	fmt.Printf("row fields : %v\n", rowsField)
-
 	listValue := rowsField.GetListValue()
 
-	fmt.Printf("list value : %v\n", listValue)
 	if listValue == nil {
 		return nil, fmt.Errorf("rows field is not a list")
 	}
@@ -575,8 +567,6 @@ func extractRowsFromTabularAttributes(anyValue *anypb.Any) ([]postgres.RecordFil
 
 		filters = append(filters, filter)
 	}
-
-	fmt.Println("Rows extracted: ", filters)
 
 	return filters, nil
 }
