@@ -638,11 +638,11 @@ type TabularData struct {
 	Rows    [][]interface{} `json:"rows"`
 }
 
-// RecordFilter represents a single row level filter
+// RecordFilter represents a filter applied on the values in a particular column of the table
 type RecordFilter struct {
-	FieldName string
-	Operator  string
-	Value     string
+	FieldName string `json:"field_name"`
+	Operator  string `json:"operator"`
+	Value     string `json:"value"`
 }
 
 // GetData retrieves data from a table with optional field selection and filters, returns it as pb.Any with JSON-formatted tabular data.
@@ -768,12 +768,10 @@ func (repo *PostgresRepository) GetData(ctx context.Context, tableName string, f
 	}
 
 	var tabularRows [][]interface{}
-	log.Printf("DEBUG: [DataHandler.GetData] rows: %v", rows)
 	for rows.Next() {
 		rowValues := make([]interface{}, len(resultColumns))
 		rowPointers := make([]interface{}, len(resultColumns))
-		log.Printf("DEBUG: [DataHandler.GetData] rowValues: %v", rowValues)
-		log.Printf("DEBUG: [DataHandler.GetData] rowPointers: %v", rowPointers)
+
 		for i := range rowValues {
 			rowPointers[i] = &rowValues[i]
 		}

@@ -407,7 +407,7 @@ func (s *Server) ReadEntities(ctx context.Context, req *pb.ReadEntityRequest) (*
 // FIXME: https://github.com/LDFLK/nexoan/issues/285
 func extractFieldsFromAttributes(attributes map[string]*pb.TimeBasedValueList) ([]string, []postgres.RecordFilter) {
 	var fields []string
-	var records []postgres.RecordFilter
+	var record_filters []postgres.RecordFilter
 
 	for attrName, attrValueList := range attributes {
 		if attrValueList == nil || len(attrValueList.Values) == 0 {
@@ -436,8 +436,8 @@ func extractFieldsFromAttributes(attributes map[string]*pb.TimeBasedValueList) (
 				log.Printf("Warning: could not extract columns from tabular attribute %s: %v", attrName, err)
 			}
 
-			if rows, err := extractRowsFromTabularAttributes(value.Value); err == nil {
-				records = append(records, rows...)
+			if filters, err := extractRecordFiltersFromTabularAttributes(value.Value); err == nil {
+				record_filters = append(record_filters, filters...)
 			} else {
 				log.Printf("Warning: could not extract rows from tabular attribute %s: %v", attrName, err)
 			}
@@ -451,7 +451,7 @@ func extractFieldsFromAttributes(attributes map[string]*pb.TimeBasedValueList) (
 			log.Printf("Unknown storage type %s for attribute %s", storageType, attrName)
 		}
 	}
-	return fields, records
+	return fields, record_filters
 }
 
 // determineStorageTypeFromValue determines the storage type from a protobuf Any value
@@ -521,8 +521,8 @@ func extractColumnsFromTabularAttribute(anyValue *anypb.Any) ([]string, error) {
 	return columns, nil
 }
 
-// extractRowsFromTabularAttributes extracts row filters from a tabular attribute value
-func extractRowsFromTabularAttributes(anyValue *anypb.Any) ([]postgres.RecordFilter, error) {
+// extractRecordFiltersFromTabularAttributes extracts row filters from a tabular attribute value
+func extractRecordFiltersFromTabularAttributes(anyValue *anypb.Any) ([]postgres.RecordFilter, error) {
 	message, err := anyValue.UnmarshalNew()
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal Any value: %v", err)
@@ -538,14 +538,14 @@ func extractRowsFromTabularAttributes(anyValue *anypb.Any) ([]postgres.RecordFil
 		return nil, fmt.Errorf("no rows found")
 	}
 
-	listValue := rowsField.GetListValue()
+	rowFieldValue := rowsField.GetListValue()
 
-	if listValue == nil {
+	if rowFieldValue == nil {
 		return nil, fmt.Errorf("rows field is not a list")
 	}
 
 	var filters []postgres.RecordFilter
-	for _, val := range listValue.Values {
+	for _, val := range rowFieldValue.Values {
 		datum := val.GetStructValue()
 		if datum == nil {
 			continue
