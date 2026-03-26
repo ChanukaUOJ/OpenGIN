@@ -159,6 +159,23 @@ paths:
               type: string
             default: ["*"]
       requestBody:
+        description: |
+          This request body allows you to filter the attribute values based on row-level criteria. 
+          You can specify multiple filters in the `records` array to refine your search. 
+          Each filter consists of:
+          - `field_name`: The name of the field to filter on.
+          - `operator`: The comparison operator to use.
+          - `value`: The value to compare against.
+
+          Accepted operators:
+          - `eq`: Equal to (default)
+          - `neq`: Not equal to
+          - `gt`: Greater than
+          - `lt`: Less than
+          - `gte`: Greater than or equal to
+          - `lte`: Less than or equal to
+          - `contains`: Contains the specified string
+          - `notcontains`: Does not contain the specified string
         required: false
         content:
           application/json:
