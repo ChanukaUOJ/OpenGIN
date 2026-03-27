@@ -432,7 +432,42 @@ def test_generic_validation_examples():
                         "field_name": "name",
                         "operator": "contains",
                         "value": "Jan"
-                    }
+                    },
+                    {
+                        "field_name": "age",
+                        "operator": "eq",
+                        "value": "25"
+                    },
+                    {
+                        "field_name": "department",
+                        "operator": "notcontains",
+                        "value": "eng"
+                    },
+                    {
+                        "field_name": "department",
+                        "operator": "neq",
+                        "value": "Engineering"
+                    },
+                    {
+                        "field_name": "salary",
+                        "operator": "gte",
+                        "value": "65000"
+                    },
+                    {
+                        "field_name": "salary",
+                        "operator": "gt",
+                        "value": "35000"
+                    },
+                    {
+                        "field_name": "salary",
+                        "operator": "lte",
+                        "value": "65000"
+                    },
+                    {
+                        "field_name": "salary",
+                        "operator": "lt",
+                        "value": "95000"
+                    },
             ]
         },
         min_rows=1,
